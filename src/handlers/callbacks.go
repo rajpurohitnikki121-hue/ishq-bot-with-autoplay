@@ -14,6 +14,7 @@ import (
 	"html"
 	"log/slog"
 	"strings"
+	"sync"
 
 	"ashokshau/tgmusic/src/core"
 	"ashokshau/tgmusic/src/core/cache"
@@ -22,6 +23,19 @@ import (
 
 	td "github.com/AshokShau/gotdbot"
 )
+
+// autoplayState tracks per-chat autoplay ON/OFF state in memory.
+var (
+	autoplayMu    sync.Mutex
+	autoplayState = make(map[int64]bool)
+)
+
+func toggleAutoplay(chatID int64) bool {
+	autoplayMu.Lock()
+	defer autoplayMu.Unlock()
+	autoplayState[chatID] = !autoplayState[chatID]
+	return autoplayState[chatID]
+}
 
 func playCallbackHandler(c *td.Client, cb *td.UpdateNewCallbackQuery) error {
 	data := cb.DataString()
@@ -62,6 +76,15 @@ func playCallbackHandler(c *td.Client, cb *td.UpdateNewCallbackQuery) error {
 	}
 
 	switch {
+	case strings.Contains(data, "play_autoplay_toggle"):
+		on := toggleAutoplay(chatID)
+		state := "OFF"
+		if on {
+			state = "ON"
+		}
+		_ = cb.Answer(c, 0, false, fmt.Sprintf("Autoplay turned %s.", state), "")
+		return nil
+
 	case strings.Contains(data, "play_skip"):
 		if err := vc.Calls.PlayNext(c, chatID); err != nil {
 			_ = cb.Answer(c, 0, false, "Unable to skip the current track.", "")
@@ -193,8 +216,12 @@ func vcPlayHandler(c *td.Client, cb *td.UpdateNewCallbackQuery) error {
 	data := cb.DataString()
 
 	if strings.Contains(data, "vcplay_close") {
+		closerName := "Unknown"
+		if user, err := c.GetUser(cb.SenderUserId); err == nil && user != nil {
+			closerName = user.FirstName
+		}
 		_ = cb.Answer(c, 0, false, "Closing panel.", "")
-		_ = c.DeleteMessages(cb.ChatId, []int64{cb.MessageId}, &td.DeleteMessagesOpts{Revoke: true})
+		_, _ = cb.EditMessageText(c, fmt.Sprintf("<b>Closed by %s</b>", html.EscapeString(closerName)), &td.EditTextMessageOpts{ParseMode: "HTML"})
 		return nil
 	}
 
