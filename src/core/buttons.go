@@ -54,6 +54,9 @@ var DevsBtn = cb("Devs", "help_devs", gotdbot.ButtonStyleDefault{})
 var PlaylistBtn = cb("Playlist", "help_playlist", gotdbot.ButtonStyleDefault{})
 var AutoplayBtn = cb("Autoplay", "help_autoplay", gotdbot.ButtonStyleDefault{})
 
+// PlayAutoplayToggleBtn toggles autoplay for the current playback session.
+var PlayAutoplayToggleBtn = cb("🔁 Autoplay: ON/OFF", "play_autoplay_toggle", gotdbot.ButtonStyleDefault{})
+
 var SourceCodeBtn = url("Source Code", "https://github.com/AshokShau/TgMusicBot", gotdbot.ButtonStylePrimary{})
 var channelBtn = url("Updates", config.SupportChannel, gotdbot.ButtonStyleDefault{})
 var groupBtn = url("Group", config.SupportGroup, gotdbot.ButtonStyleDefault{})
@@ -153,7 +156,9 @@ func ControlButtons(mode string) *gotdbot.ReplyMarkupInlineKeyboard {
 		return &gotdbot.ReplyMarkupInlineKeyboard{
 			Rows: [][]gotdbot.InlineKeyboardButton{
 				{skipBtn, stopBtn, pauseBtn},
-				{addToPlaylistBtn, CloseBtn},
+				{addToPlaylistBtn},
+				{PlayAutoplayToggleBtn},
+				{CloseBtn},
 			},
 		}
 
@@ -161,6 +166,7 @@ func ControlButtons(mode string) *gotdbot.ReplyMarkupInlineKeyboard {
 		return &gotdbot.ReplyMarkupInlineKeyboard{
 			Rows: [][]gotdbot.InlineKeyboardButton{
 				{skipBtn, stopBtn, resumeBtn},
+				{PlayAutoplayToggleBtn},
 				{CloseBtn},
 			},
 		}
@@ -169,6 +175,7 @@ func ControlButtons(mode string) *gotdbot.ReplyMarkupInlineKeyboard {
 		return &gotdbot.ReplyMarkupInlineKeyboard{
 			Rows: [][]gotdbot.InlineKeyboardButton{
 				{skipBtn, stopBtn, pauseBtn},
+				{PlayAutoplayToggleBtn},
 				{CloseBtn},
 			},
 		}
@@ -177,6 +184,7 @@ func ControlButtons(mode string) *gotdbot.ReplyMarkupInlineKeyboard {
 		return &gotdbot.ReplyMarkupInlineKeyboard{
 			Rows: [][]gotdbot.InlineKeyboardButton{
 				{skipBtn, stopBtn, unmuteBtn},
+				{PlayAutoplayToggleBtn},
 				{CloseBtn},
 			},
 		}
@@ -185,6 +193,7 @@ func ControlButtons(mode string) *gotdbot.ReplyMarkupInlineKeyboard {
 		return &gotdbot.ReplyMarkupInlineKeyboard{
 			Rows: [][]gotdbot.InlineKeyboardButton{
 				{skipBtn, stopBtn, muteBtn},
+				{PlayAutoplayToggleBtn},
 				{CloseBtn},
 			},
 		}
