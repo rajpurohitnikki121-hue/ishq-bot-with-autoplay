@@ -56,13 +56,12 @@ func startHandler(c *td.Client, m *td.Message) error {
 
 		response := fmt.Sprintf(
 			"<img src=\"%s\"/>\n"+
-				"<h3>Welcome, %s!</h3>\n"+
-				"<p><b>%s</b> lets you stream high-quality music and video directly in Telegram voice and video chats.</p>\n\n"+
-				"<p><b>Supported platforms:</b> YouTube, Spotify, Apple Music, SoundCloud, Deezer, Twitch, and many more.</p>\n\n"+
-				"<p>Use the buttons below to add the bot to your group or explore the available commands.</p>",
+				"<p>👋🏻 𝐇𝐞𝐲, %s ♡</p>\n\n"+
+				"<p>🎵 𐙚 𝐈𝐒𝐇𝐐 ✘ 𝐌𝐮𝐬𝐢𝐜 ᥫ᭡</p>\n\n"+
+				"<p>🥀 𝐒𝐦𝐨𝐨𝐭𝐡 𝐚𝐧𝐝 𝐥𝐚𝐠-𝐟𝐫𝐞𝐞 𝐦𝐮𝐬𝐢𝐜 𝐛𝐨𝐭 𝐰𝐢𝐭𝐡 𝐞𝐚𝐬𝐲 𝐚𝐧𝐝 𝐮𝐬𝐞𝐟𝐮𝐥 𝐟𝐞𝐚𝐭𝐮𝐫𝐞𝐬.</p>\n\n"+
+				"<p>✦ 𝐂𝐥𝐢𝐜𝐤 𝐨𝐧 𝐭𝐡𝐞 𝐇𝐞𝐥𝐩 𝐛𝐮𝐭𝐭𝐨𝐧 𝐟𝐨𝐫 𝐦𝐨𝐫𝐞 𝐢𝐧𝐟𝐨 ♡</p>",
 			config.StartImg,
 			firstName(c, m),
-			c.Me.FirstName,
 		)
 
 		richMessage := &td.InputRichMessage{
