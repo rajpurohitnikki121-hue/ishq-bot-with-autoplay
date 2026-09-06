@@ -24,15 +24,6 @@ import (
 	td "github.com/AshokShau/gotdbot"
 )
 
-// poweredByFooter is appended to now-playing messages.
-const poweredByFooter = "\n\n<b>Powered by:</b> <a href='https://t.me/pixiiela'>𝐏𝐢𝐱𝐞𝐥𝐚</a>"
-
-// mentionUser returns a clickable HTML mention for the message sender.
-func mentionUser(c *td.Client, m *td.Message) string {
-	name := html.EscapeString(firstName(c, m))
-	return fmt.Sprintf("<a href='tg://user?id=%d'>%s</a>", m.SenderID(), name)
-}
-
 // playHandler handles the /play command.
 func playHandler(c *td.Client, m *td.Message) error {
 	if !playMode(c, m) {
@@ -229,9 +220,10 @@ func handleMedia(c *td.Client, m *td.Message, updater *td.Message, dlMsg *td.Mes
 		}
 		escURL := html.EscapeString(saveCache.URL)
 		escName := html.EscapeString(saveCache.Name)
+		escUser := html.EscapeString(saveCache.User)
 		queueInfo := fmt.Sprintf(
 			"<u><b>Added to queue: %d</b></u>\n\n<b>Title:</b> <a href='%s'>%s</a>\n\n<b>Duration:</b> %s min\n<b>Requested by:</b> %s",
-			qLen, escURL, escName, utils.SecToMin(saveCache.Duration), mentionUser(c, m),
+			qLen, escURL, escName, utils.SecToMin(saveCache.Duration), escUser,
 		)
 		_, err := updater.EditText(c, queueInfo, &td.EditTextMessageOpts{ReplyMarkup: core.QueueMarkup(saveCache.TrackID), ParseMode: "HTML", DisableWebPagePreview: true})
 		return err
@@ -260,10 +252,11 @@ func handleMedia(c *td.Client, m *td.Message, updater *td.Message, dlMsg *td.Mes
 
 	escURL := html.EscapeString(saveCache.URL)
 	escName := html.EscapeString(saveCache.Name)
+	escUser := html.EscapeString(saveCache.User)
 
 	nowPlaying := fmt.Sprintf(
-		"<u><b>| Started streaming</b></u>\n\n<b>Title:</b> <a href='%s'>%s</a>\n\n<b>Duration:</b> %s min\n<b>Requested by:</b> %s%s",
-		escURL, escName, utils.SecToMin(saveCache.Duration), mentionUser(c, m), poweredByFooter,
+		"<u><b>| Started streaming</b></u>\n\n<b>Title:</b> <a href='%s'>%s</a>\n\n<b>Duration:</b> %s min\n<b>Requested by:</b> %s",
+		escURL, escName, utils.SecToMin(saveCache.Duration), escUser,
 	)
 
 	_, err = updater.EditText(c, nowPlaying, &td.EditTextMessageOpts{
@@ -339,9 +332,10 @@ func handleSingleTrack(c *td.Client, m *td.Message, updater *td.Message, song ut
 		}
 		escURL := html.EscapeString(saveCache.URL)
 		escName := html.EscapeString(saveCache.Name)
+		escUser := html.EscapeString(saveCache.User)
 		queueInfo := fmt.Sprintf(
 			"<u><b>Added to queue: %d</b></u>\n\n<b>Title:</b> <a href='%s'>%s</a>\n\n<b>Duration:</b> %s min\n<b>Requested by:</b> %s",
-			qLen, escURL, escName, utils.SecToMin(saveCache.Duration), mentionUser(c, m),
+			qLen, escURL, escName, utils.SecToMin(saveCache.Duration), escUser,
 		)
 
 		_, err := updater.EditText(c, queueInfo, &td.EditTextMessageOpts{ReplyMarkup: core.QueueMarkup(saveCache.TrackID), ParseMode: "HTML", DisableWebPagePreview: true})
@@ -367,38 +361,11 @@ func handleSingleTrack(c *td.Client, m *td.Message, updater *td.Message, song ut
 
 	escURLnp := html.EscapeString(saveCache.URL)
 	escNamenp := html.EscapeString(saveCache.Name)
-
-	// If a thumbnail is available, send a rich message with the image (same
-	// mechanism used for the /start welcome image), falling back to a plain
-	// text message if that fails for any reason.
-	if saveCache.Thumbnail != "" {
-		nowPlayingHTML := fmt.Sprintf(
-			"<img src=\"%s\"/>\n"+
-				"<p><u><b>| Started streaming</b></u></p>\n\n"+
-				"<p><b>Title:</b> <a href='%s'>%s</a></p>\n"+
-				"<p><b>Duration:</b> %s min</p>\n"+
-				"<p><b>Requested by:</b> %s</p>%s",
-			html.EscapeString(saveCache.Thumbnail), escURLnp, escNamenp,
-			utils.SecToMin(song.Duration), mentionUser(c, m), poweredByFooter,
-		)
-
-		richMessage := &td.InputRichMessage{
-			Source: &td.RichMessageSourceHtml{Text: nowPlayingHTML},
-		}
-
-		_ = c.DeleteMessages(chatId, []int64{updater.Id}, &td.DeleteMessagesOpts{Revoke: true})
-		if _, rErr := m.ReplyRichMessage(c, richMessage, &td.SendTextMessageOpts{
-			ReplyMarkup: core.ControlButtons("play"),
-		}); rErr == nil {
-			return nil
-		} else {
-			c.Logger.Warn("Rich message with thumbnail failed, falling back to text", "error", rErr)
-		}
-	}
+	escUsernp := html.EscapeString(saveCache.User)
 
 	nowPlaying := fmt.Sprintf(
-		"<u><b>| Started streaming</b></u>\n\n<b>Title:</b> <a href='%s'>%s</a>\n\n<b>Duration:</b> %s min\n<b>Requested by:</b> %s%s",
-		escURLnp, escNamenp, utils.SecToMin(song.Duration), mentionUser(c, m), poweredByFooter,
+		"<u><b>| Started streaming</b></u>\n\n<b>Title:</b> <a href='%s'>%s</a>\n\n<b>Duration:</b> %s min\n<b>Requested by:</b> %s",
+		escURLnp, escNamenp, utils.SecToMin(song.Duration), escUsernp,
 	)
 
 	_, err := updater.EditText(c, nowPlaying, &td.EditTextMessageOpts{
@@ -490,9 +457,10 @@ func handleMultipleTracks(c *td.Client, m *td.Message, updater *td.Message, trac
 	}
 
 	sb.WriteString("</blockquote>")
+	escRequester := html.EscapeString(firstName(c, m))
 	queueSummary := fmt.Sprintf(
 		"\n<b>Queue Total:</b> %d\n<b>Duration:</b> %s min\n<b>Requested by:</b> %s",
-		qLenAfter, utils.SecToMin(totalDuration), mentionUser(c, m),
+		qLenAfter, utils.SecToMin(totalDuration), escRequester,
 	)
 
 	sb.WriteString(queueSummary)
