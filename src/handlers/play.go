@@ -30,7 +30,7 @@ const poweredByFooter = "\n\n<b>Powered by:</b> <a href='https://t.me/pixiiela'>
 // mentionUser returns a clickable HTML mention for the message sender.
 func mentionUser(c *td.Client, m *td.Message) string {
 	name := html.EscapeString(firstName(c, m))
-	return fmt.Sprintf("<a href='tg://user?id=%d'>%s</a>", m.SenderUserId, name)
+	return fmt.Sprintf("<a href='tg://user?id=%d'>%s</a>", m.SenderID(), name)
 }
 
 // playHandler handles the /play command.
