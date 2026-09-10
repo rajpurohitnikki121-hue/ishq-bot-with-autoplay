@@ -35,7 +35,7 @@ func pauseHandler(c *td.Client, m *td.Message) error {
 		return nil
 	}
 
-	_, err := m.ReplyText(c, fmt.Sprintf("Playback has been paused by %s.", firstName(c, m)), &td.SendTextMessageOpts{ReplyMarkup: core.ControlButtons("pause")})
+	_, err := m.ReplyText(c, fmt.Sprintf("Playback has been paused by %s.", firstName(c, m)), &td.SendTextMessageOpts{ReplyMarkup: core.ControlButtons("pause", "")})
 	return err
 }
 
@@ -61,6 +61,6 @@ func resumeHandler(c *td.Client, m *td.Message) error {
 		return nil
 	}
 
-	_, err := m.ReplyText(c, fmt.Sprintf("Playback has been resumed by %s.", firstName(c, m)), &td.SendTextMessageOpts{ReplyMarkup: core.ControlButtons("resume")})
+	_, err := m.ReplyText(c, fmt.Sprintf("Playback has been resumed by %s.", firstName(c, m)), &td.SendTextMessageOpts{ReplyMarkup: core.ControlButtons("resume", "")})
 	return err
 }
