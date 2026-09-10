@@ -36,6 +36,7 @@ import (
 	"math/big"
 	"os"
 	"strings"
+	"time"
 
 	td "github.com/AshokShau/gotdbot"
 )
@@ -140,6 +141,12 @@ func (c *TelegramCalls) playSong(bot *td.Client, chatID int64, song *utils.Cache
 		return nil
 	}
 
+	// reply's message ID doesn't change when edited, so it can be reused
+	// directly by the ticker to push further live updates.
+	cache.ChatCache.SetNowPlayingMsg(chatID, reply)
+	cache.ChatCache.SetPaused(chatID, false)
+	go c.StartProgressTicker(bot, chatID, song.TrackID, song.Duration)
+
 	return nil
 }
 
@@ -177,6 +184,7 @@ func (c *TelegramCalls) Pause(chatId int64) (bool, error) {
 		slog.Warn("[Pause] Failed to pause the call", "error", err, "index", index)
 		return res, fmt.Errorf("failed to pause: %w", err)
 	}
+	cache.ChatCache.SetPaused(chatId, true)
 	return res, err
 }
 
@@ -192,6 +200,7 @@ func (c *TelegramCalls) Resume(chatId int64) (bool, error) {
 		logger.Warn("Failed to resume the call", "error", err, "index", index)
 		return res, fmt.Errorf("failed to resume: %w", err)
 	}
+	cache.ChatCache.SetPaused(chatId, false)
 
 	return res, err
 }
@@ -242,6 +251,50 @@ func (c *TelegramCalls) PlayedTime(chatId int64) (uint64, error) {
 	}
 
 	return _time, nil
+}
+
+// StartProgressTicker periodically edits the stored now-playing message for a
+// chat to show a live elapsed/total progress bar, until the track changes,
+// playback stops, or the message is no longer available. It exits quietly on
+// any of these conditions rather than erroring, since it runs in the
+// background.
+func (c *TelegramCalls) StartProgressTicker(bot *td.Client, chatID int64, trackID string, totalDuration int) {
+	if totalDuration <= 0 {
+		return
+	}
+
+	ticker := time.NewTicker(12 * time.Second)
+	defer ticker.Stop()
+
+	for range ticker.C {
+		track := cache.ChatCache.GetPlayingTrack(chatID)
+		if track == nil || track.TrackID != trackID {
+			return
+		}
+
+		msg := cache.ChatCache.GetNowPlayingMsg(chatID)
+		if msg == nil {
+			return
+		}
+
+		elapsed, err := c.PlayedTime(chatID)
+		if err != nil {
+			continue
+		}
+
+		mode := "resume"
+		if cache.ChatCache.IsPaused(chatID) {
+			mode = "pause"
+		}
+
+		bar := fmt.Sprintf("%s / %s", utils.SecToMin(int(elapsed)), utils.SecToMin(totalDuration))
+
+		_, _ = msg.EditText(bot, msg.Text(), &td.EditTextMessageOpts{
+			ReplyMarkup:           core.ControlButtons(mode, bar),
+			ParseMode:             "HTML",
+			DisableWebPagePreview: true,
+		})
+	}
 }
 
 // SeekStream jumps to a specific time in the current media stream.
