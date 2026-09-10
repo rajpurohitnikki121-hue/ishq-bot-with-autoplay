@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"log/slog"
 	"math/big"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -163,18 +164,40 @@ func (y *youTubeData) getTrack() (utils.TrackInfo, error) {
 }
 
 // downloadTrack handles the download of a track from YouTube.
+// The same API_URL setting is auto-detected: if it points at Sparrow, the
+// Sparrow-style stream endpoint is used; otherwise the onegrab/Fallen-style
+// API is used as before. yt-dlp remains the final fallback either way.
 func (y *youTubeData) downloadTrack(info utils.TrackInfo, video bool) (string, error) {
 	if !video && info.CdnURL != "" {
 		return info.CdnURL, nil
 	}
 
-	if !video && y.ApiUrl != "" && y.APIKey != "" {
+	if !video && strings.Contains(strings.ToLower(y.ApiUrl), "apisparrow") {
+		if streamURL, err := y.downloadWithSparrowApi(info.Id); err == nil {
+			return streamURL, nil
+		} else {
+			slog.Warn("Sparrow API download failed, falling back to yt-dlp", "error", err)
+		}
+	} else if !video && y.ApiUrl != "" && y.APIKey != "" {
 		if filePath, err := y.downloadWithApi(info.Id, video); err == nil {
 			return filePath, nil
 		}
 	}
 
 	return y.downloadWithYtDlp(info.Id, video)
+}
+
+// downloadWithSparrowApi returns a direct stream URL from the Sparrow API for the given video ID.
+func (y *youTubeData) downloadWithSparrowApi(videoID string) (string, error) {
+	if y.ApiUrl == "" {
+		return "", errors.New("API_URL is not configured")
+	}
+
+	videoURL := fmt.Sprintf("https://www.youtube.com/watch?v=%s", videoID)
+	streamURL := fmt.Sprintf("%s/play?url=%s",
+		strings.TrimRight(y.ApiUrl, "/"), url.QueryEscape(videoURL))
+
+	return streamURL, nil
 }
 
 // buildYtdlpParams constructs the command-line parameters for yt-dlp to download media.
