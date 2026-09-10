@@ -261,7 +261,7 @@ func handleMedia(c *td.Client, m *td.Message, updater *td.Message, dlMsg *td.Mes
 
 	_, err = updater.EditText(c, nowPlaying, &td.EditTextMessageOpts{
 		ParseMode:             "HTML",
-		ReplyMarkup:           core.ControlButtons("play"),
+		ReplyMarkup:           core.ControlButtons("play", utils.SecToMin(saveCache.Duration)),
 		DisableWebPagePreview: true,
 	})
 
@@ -369,7 +369,7 @@ func handleSingleTrack(c *td.Client, m *td.Message, updater *td.Message, song ut
 	)
 
 	_, err := updater.EditText(c, nowPlaying, &td.EditTextMessageOpts{
-		ReplyMarkup:           core.ControlButtons("play"),
+		ReplyMarkup:           core.ControlButtons("play", utils.SecToMin(song.Duration)),
 		ParseMode:             "HTML",
 		DisableWebPagePreview: true,
 	})
