@@ -265,6 +265,12 @@ func handleMedia(c *td.Client, m *td.Message, updater *td.Message, dlMsg *td.Mes
 		DisableWebPagePreview: true,
 	})
 
+	if err == nil {
+		cache.ChatCache.SetNowPlayingMsg(chatId, updater)
+		cache.ChatCache.SetPaused(chatId, false)
+		go vc.Calls.StartProgressTicker(c, chatId, saveCache.TrackID, saveCache.Duration)
+	}
+
 	return err
 }
 
@@ -378,6 +384,10 @@ func handleSingleTrack(c *td.Client, m *td.Message, updater *td.Message, song ut
 		c.Logger.Warn("Edit message failed", "error", err)
 		return err
 	}
+
+	cache.ChatCache.SetNowPlayingMsg(chatId, updater)
+	cache.ChatCache.SetPaused(chatId, false)
+	go vc.Calls.StartProgressTicker(c, chatId, song.Id, song.Duration)
 
 	return nil
 }
