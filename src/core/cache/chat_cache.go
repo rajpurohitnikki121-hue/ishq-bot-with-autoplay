@@ -11,6 +11,8 @@ package cache
 import (
 	"ashokshau/tgmusic/src/utils"
 	"sync"
+
+	td "github.com/AshokShau/gotdbot"
 )
 
 // ChatData holds the state of a chat's music queue.
@@ -18,6 +20,8 @@ type ChatData struct {
 	Queue            []*utils.CachedTrack
 	Autoplay         bool
 	LastYouTubeTrack *utils.CachedTrack
+	NowPlayingMsg    *td.Message
+	Paused           bool
 }
 
 // ChatCacher is a thread-safe cache that manages music queues for multiple chats.
@@ -311,6 +315,46 @@ func (c *ChatCacher) GetTrackIfExists(chatID int64, trackID string) *utils.Cache
 		}
 	}
 	return nil
+}
+
+// SetNowPlayingMsg stores the message object that shows the live progress bar,
+// so the background ticker can edit it directly without re-fetching it.
+func (c *ChatCacher) SetNowPlayingMsg(chatID int64, msg *td.Message) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	data := c.getOrCreate(chatID)
+	data.NowPlayingMsg = msg
+}
+
+// GetNowPlayingMsg returns the stored now-playing message for a chat, or nil.
+func (c *ChatCacher) GetNowPlayingMsg(chatID int64) *td.Message {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	data, ok := c.chatCache[chatID]
+	if !ok {
+		return nil
+	}
+	return data.NowPlayingMsg
+}
+
+// SetPaused sets whether playback is currently paused for a chat.
+func (c *ChatCacher) SetPaused(chatID int64, paused bool) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	data := c.getOrCreate(chatID)
+	data.Paused = paused
+}
+
+// IsPaused returns whether playback is currently paused for a chat.
+func (c *ChatCacher) IsPaused(chatID int64) bool {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	data, ok := c.chatCache[chatID]
+	return ok && data.Paused
 }
 
 // ChatCache is the global instance.
