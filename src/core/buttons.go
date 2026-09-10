@@ -141,68 +141,76 @@ func BackHelpMenuKeyboard() *gotdbot.ReplyMarkupInlineKeyboard {
 	}
 }
 
-func ControlButtons(mode string) *gotdbot.ReplyMarkupInlineKeyboard {
+func ControlButtons(mode string, duration string) *gotdbot.ReplyMarkupInlineKeyboard {
 	skipBtn := cb("‣‣I", "play_skip", gotdbot.ButtonStyleDefault{})
 	stopBtn := cb("▢", "play_stop", gotdbot.ButtonStyleDefault{})
 	pauseBtn := cb("II", "play_pause", gotdbot.ButtonStyleDefault{})
 	resumeBtn := cb("▷", "play_resume", gotdbot.ButtonStyleDefault{})
 	muteBtn := cb("🔇", "play_mute", gotdbot.ButtonStyleDefault{})
 	unmuteBtn := cb("🔊", "play_unmute", gotdbot.ButtonStyleDefault{})
-	addToPlaylistBtn := cb("➕", "play_add_to_list", gotdbot.ButtonStylePrimary{})
+
+	var durationRow []gotdbot.InlineKeyboardButton
+	if duration != "" {
+		durationRow = []gotdbot.InlineKeyboardButton{
+			cb(fmt.Sprintf("⏱ %s", duration), "play_duration_info", gotdbot.ButtonStyleDefault{}),
+		}
+	}
 
 	switch mode {
 
 	case "play":
-		return &gotdbot.ReplyMarkupInlineKeyboard{
-			Rows: [][]gotdbot.InlineKeyboardButton{
-				{skipBtn, stopBtn, pauseBtn},
-				{addToPlaylistBtn},
-				{PlayAutoplayToggleBtn},
-				{CloseBtn},
-			},
+		rows := [][]gotdbot.InlineKeyboardButton{
+			{skipBtn, stopBtn, pauseBtn, muteBtn},
 		}
+		if durationRow != nil {
+			rows = append(rows, durationRow)
+		}
+		rows = append(rows, []gotdbot.InlineKeyboardButton{PlayAutoplayToggleBtn})
+		return &gotdbot.ReplyMarkupInlineKeyboard{Rows: rows}
 
 	case "pause":
-		return &gotdbot.ReplyMarkupInlineKeyboard{
-			Rows: [][]gotdbot.InlineKeyboardButton{
-				{skipBtn, stopBtn, resumeBtn},
-				{PlayAutoplayToggleBtn},
-				{CloseBtn},
-			},
+		rows := [][]gotdbot.InlineKeyboardButton{
+			{skipBtn, stopBtn, resumeBtn, muteBtn},
 		}
+		if durationRow != nil {
+			rows = append(rows, durationRow)
+		}
+		rows = append(rows, []gotdbot.InlineKeyboardButton{PlayAutoplayToggleBtn})
+		return &gotdbot.ReplyMarkupInlineKeyboard{Rows: rows}
 
 	case "resume":
-		return &gotdbot.ReplyMarkupInlineKeyboard{
-			Rows: [][]gotdbot.InlineKeyboardButton{
-				{skipBtn, stopBtn, pauseBtn},
-				{PlayAutoplayToggleBtn},
-				{CloseBtn},
-			},
+		rows := [][]gotdbot.InlineKeyboardButton{
+			{skipBtn, stopBtn, pauseBtn, muteBtn},
 		}
+		if durationRow != nil {
+			rows = append(rows, durationRow)
+		}
+		rows = append(rows, []gotdbot.InlineKeyboardButton{PlayAutoplayToggleBtn})
+		return &gotdbot.ReplyMarkupInlineKeyboard{Rows: rows}
 
 	case "mute":
-		return &gotdbot.ReplyMarkupInlineKeyboard{
-			Rows: [][]gotdbot.InlineKeyboardButton{
-				{skipBtn, stopBtn, unmuteBtn},
-				{PlayAutoplayToggleBtn},
-				{CloseBtn},
-			},
+		rows := [][]gotdbot.InlineKeyboardButton{
+			{skipBtn, stopBtn, pauseBtn, unmuteBtn},
 		}
+		if durationRow != nil {
+			rows = append(rows, durationRow)
+		}
+		rows = append(rows, []gotdbot.InlineKeyboardButton{PlayAutoplayToggleBtn})
+		return &gotdbot.ReplyMarkupInlineKeyboard{Rows: rows}
 
 	case "unmute":
-		return &gotdbot.ReplyMarkupInlineKeyboard{
-			Rows: [][]gotdbot.InlineKeyboardButton{
-				{skipBtn, stopBtn, muteBtn},
-				{PlayAutoplayToggleBtn},
-				{CloseBtn},
-			},
+		rows := [][]gotdbot.InlineKeyboardButton{
+			{skipBtn, stopBtn, pauseBtn, muteBtn},
 		}
+		if durationRow != nil {
+			rows = append(rows, durationRow)
+		}
+		rows = append(rows, []gotdbot.InlineKeyboardButton{PlayAutoplayToggleBtn})
+		return &gotdbot.ReplyMarkupInlineKeyboard{Rows: rows}
 
 	default:
 		return &gotdbot.ReplyMarkupInlineKeyboard{
-			Rows: [][]gotdbot.InlineKeyboardButton{
-				{CloseBtn},
-			},
+			Rows: [][]gotdbot.InlineKeyboardButton{},
 		}
 	}
 }
