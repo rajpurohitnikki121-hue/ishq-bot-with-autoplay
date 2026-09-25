@@ -5,15 +5,7 @@ WORKDIR /app
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     gcc \
-    g++ \
-    libc6-dev \
-    linux-libc-dev \
-    make \
-    pkg-config \
-    zlib1g-dev \
-    ca-certificates \
-    curl \
-    unzip && \
+    zlib1g-dev && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
@@ -23,14 +15,9 @@ RUN go mod download
 COPY . .
 
 RUN go run github.com/AshokShau/gotdbot/scripts/tools
-
 RUN go run setup_ntgcalls.go
 
-RUN test -f ntgcalls/ntgcalls.h || \
-    (echo "ERROR: ntgcalls.h was not generated" && exit 1)
-
-RUN CGO_ENABLED=1 GOOS=linux \
-    go build -ldflags="-w -s" -o main .
+RUN CGO_ENABLED=1 GOOS=linux go build -ldflags="-w -s" -o main .
 
 FROM debian:12-slim AS runtime
 
@@ -42,8 +29,7 @@ RUN apt-get update && \
     curl \
     lsb-release \
     ca-certificates \
-    libc6 && \
-    rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/*
 
 RUN wget -O /usr/local/bin/yt-dlp \
     https://github.com/yt-dlp/yt-dlp-nightly-builds/releases/latest/download/yt-dlp_linux \
