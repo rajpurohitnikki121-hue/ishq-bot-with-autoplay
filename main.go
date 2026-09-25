@@ -16,9 +16,9 @@ package main
 // https://github.com/golang/go/issues/63903
 #cgo windows LDFLAGS: -L. -lntgcalls
 #include "ntgcalls/ntgcalls.h"
-#include "glibc_compatibility.h"
 */
 import "C"
+
 import (
 	"ashokshau/tgmusic/internal/bot"
 	"ashokshau/tgmusic/internal/calls"
@@ -48,6 +48,7 @@ func main() {
 	_ = os.Remove(tdDir)
 	libPath := "./libtdjson.so.1.8.67"
 	manager := gotdbot.NewClientManager(libPath)
+
 	clientConfig := gotdbot.DefaultClientConfig()
 	clientConfig.AutoRetry = &gotdbot.AutoRetry{
 		ChatNotFound: true,
@@ -56,7 +57,13 @@ func main() {
 
 	clientConfig.DatabaseDirectory = tdDir
 	clientConfig.ParseMode = gotdbot.ParseModeHTML
-	client, err := manager.RegisterClient(config.ApiId, config.ApiHash, config.Token, clientConfig)
+
+	client, err := manager.RegisterClient(
+		config.ApiId,
+		config.ApiHash,
+		config.Token,
+		clientConfig,
+	)
 	if err != nil {
 		panic("failed to register client: " + err.Error())
 	}
@@ -70,9 +77,17 @@ func main() {
 		dlClientConfig.DatabaseDirectory = tdDir + "_dl"
 		_ = os.Remove(dlClientConfig.DatabaseDirectory)
 
-		dlClient, err := manager.RegisterClient(config.ApiId, config.ApiHash, config.DlBotToken, dlClientConfig)
+		dlClient, err := manager.RegisterClient(
+			config.ApiId,
+			config.ApiHash,
+			config.DlBotToken,
+			dlClientConfig,
+		)
 		if err != nil {
-			client.Logger.Warnf("failed to register dl client: %s", err.Error())
+			client.Logger.Warnf(
+				"failed to register dl client: %s",
+				err.Error(),
+			)
 			downloader.DlBot = client
 		} else {
 			downloader.DlBot = dlClient
@@ -81,7 +96,12 @@ func main() {
 	}
 
 	for i, session := range config.SessionStrings {
-		err = calls.Calls.StartClient(config.ApiId, config.ApiHash, session, fmt.Sprintf("_%d", i))
+		err = calls.Calls.StartClient(
+			config.ApiId,
+			config.ApiHash,
+			session,
+			fmt.Sprintf("_%d", i),
+		)
 		if err != nil {
 			panic("failed to start client: " + err.Error())
 		}
@@ -89,8 +109,15 @@ func main() {
 
 	calls.Calls.RegisterHandlers(client)
 	bot.LoadModules(client)
-	_, _ = client.SendTextMessage(config.LoggerId, "The bot has started!", nil)
+
+	_, _ = client.SendTextMessage(
+		config.LoggerId,
+		"The bot has started!",
+		nil,
+	)
+
 	manager.Idle()
+
 	client.Logger.Info("The bot is shutting down...")
 	calls.Calls.StopAllClients()
 }
