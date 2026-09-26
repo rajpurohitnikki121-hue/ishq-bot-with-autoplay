@@ -12,7 +12,6 @@ package main
 #cgo linux LDFLAGS: -L . -lntgcalls -lm -lz
 #cgo darwin LDFLAGS: -L . -lntgcalls -lc++ -lz -lbz2 -liconv -framework AVFoundation -framework AudioToolbox -framework CoreAudio -framework QuartzCore -framework CoreMedia -framework VideoToolbox -framework AppKit -framework Metal -framework MetalKit -framework OpenGL -framework IOSurface -framework ScreenCaptureKit
 #cgo windows LDFLAGS: -L. -lntgcalls
-
 #include "ntgcalls/ntgcalls.h"
 #include "glibc_compatibility.h"
 */
@@ -25,6 +24,7 @@ import (
 	"ashokshau/tgmusic/internal/db"
 	"ashokshau/tgmusic/internal/downloader"
 	"fmt"
+	"net/http"
 	_ "net/http/pprof"
 	"os"
 	"time"
@@ -38,7 +38,6 @@ func main() {
 	if err := config.LoadEnv(); err != nil {
 		panic(err)
 	}
-
 	if err := db.InitDatabase(); err != nil {
 		panic("failed to connect database: " + err.Error())
 	}
@@ -57,7 +56,6 @@ func main() {
 
 	clientConfig.DatabaseDirectory = tdDir
 	clientConfig.ParseMode = gotdbot.ParseModeHTML
-
 	client, err := manager.RegisterClient(
 		config.ApiId,
 		config.ApiHash,
@@ -76,7 +74,6 @@ func main() {
 
 		dlClientConfig.DatabaseDirectory = tdDir + "_dl"
 		_ = os.Remove(dlClientConfig.DatabaseDirectory)
-
 		dlClient, err := manager.RegisterClient(
 			config.ApiId,
 			config.ApiHash,
@@ -112,6 +109,23 @@ func main() {
 		"The bot has started!",
 		nil,
 	)
+
+	// Render Free Web Service health server
+	go func() {
+		port := os.Getenv("PORT")
+		if port == "" {
+			port = "10000"
+		}
+
+		http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte("Robin Bot is running"))
+		})
+
+		if err := http.ListenAndServe(":"+port, nil); err != nil {
+			client.Logger.Warnf("HTTP server stopped: %s", err.Error())
+		}
+	}()
 
 	manager.Idle()
 
